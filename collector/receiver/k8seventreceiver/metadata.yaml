@@ -1,0 +1,7 @@
+type: k8sevent
+
+status:
+  class: receiver
+  stability:
+    alpha: [logs]
+  distributions: [rancher]

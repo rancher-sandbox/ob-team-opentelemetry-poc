@@ -1,0 +1,24 @@
+apiVersion: otel.stack.io/v1alpha1
+kind : OpenTelemetryStack
+metadata:
+  name: stack-example
+  namespace : otel-test
+spec:
+  gateway:
+    enabled: true
+    image:
+      # image: busybox
+      # tag: 1.37.0
+      registry: docker.io
+      repo : alex7285
+      image : gateway
+      tag : dev
+    grpcDebugLogging : true
+  node:
+    enabled: true
+    image:
+      registry: docker.io
+      repo : alex7285
+      image : node
+      tag : dev
+    grpcDebugLogging : true

@@ -1,6 +1,6 @@
 dist:
   module: github.com/rancher-sandbox/ob-team-opentelemetry-poc/images/gateway/minimal
-  output_path: ./images/gateway/minimal/
+  output_path: ./collector/images/gateway/minimal/
   name: rancher-logging-minimal
   description: (Minimal) OpenTelemetry Collector for Rancher Logging
   version: 0.1.0+up0.120.0

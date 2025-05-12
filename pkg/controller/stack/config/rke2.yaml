@@ -1,0 +1,28 @@
+include: [ /var/lib/rancher/rke2/agent/logs/kubelet.log ]
+storage: file_storage
+include_file_path: true
+include_file_name: false
+operators:
+- type: regex_parser
+  id: time-sev
+  on_error: drop
+  regex: '^(?P<klog_level>[IWEF])(?P<klog_time>\d{4} \d{2}:\d{2}:\d{2}\.\d+)'
+  timestamp:
+    parse_from: attributes.klog_time
+    layout: '%m%d %H:%M:%S.%L'
+  severity:
+    parse_from: attributes.klog_level
+    mapping:
+      info: I
+      warn: W
+      error: E
+      fatal: F
+- type: move
+  from: body
+  to: attributes.message
+- type: add
+  field: attributes.log_type
+  value: controlplane
+- type: add
+  field: attributes.kubernetes_component
+  value: kubelet

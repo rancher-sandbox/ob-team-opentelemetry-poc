@@ -8,6 +8,9 @@ TYPE?=minimal
 collector:
 	ocb --config=./collector/$(TARGET)-$(TYPE).yaml --skip-compilation
 
+compile:
+	ocb --config=./collector/$(TARGET)-$(TYPE).yaml
+
 build:
 	go build -o ./bin/operator ./cmd/operator/main.go
 

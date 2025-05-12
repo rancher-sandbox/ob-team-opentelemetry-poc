@@ -13,11 +13,33 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-type Generator struct {
+const (
+	configServices   = "service"
+	configPipelines  = "pipelines"
+	configExporters  = "exporters"
+	configExtensions = "extensions"
+	configReceivers  = "receivers"
+)
+
+type ClusterStackGenerator struct {
+	systemNamespace string
+	clusterstack    *v1alpha1.OpenTelemetryClusterStack
+	managedConfig   map[string]any
+}
+
+func NewClusterStackGenerator(systemNamespace string, stack *v1alpha1.OpenTelemetryClusterStack) *ClusterStackGenerator {
+	return &ClusterStackGenerator{
+		systemNamespace: systemNamespace,
+		clusterstack:    stack,
+		managedConfig:   map[string]any{},
+	}
+}
+
+type StackGenerator struct {
 	stack *v1alpha1.OpenTelemetryStack
 }
 
-func (g *Generator) Objects() ([]runtime.Object, error) {
+func (g *StackGenerator) Objects() ([]runtime.Object, error) {
 	if g.stack == nil {
 		return []runtime.Object{}, nil
 	}
@@ -38,23 +60,23 @@ func (g *Generator) Objects() ([]runtime.Object, error) {
 	}
 
 	if g.stack.Spec.Node.Enabled {
-		nodeCfg := g.nodeConfig()
-		ret = append(ret, nodeCfg)
+		// nodeCfg := g.nodeConfig()
+		// ret = append(ret, nodeCfg)
 
-		nodeSvc := g.nodeService()
-		ret = append(ret, nodeSvc)
+		// nodeSvc := g.nodeService()
+		// ret = append(ret, nodeSvc)
 
-		nodeSet, err := g.nodeSet()
-		if err != nil {
-			return nil, err
-		}
-		ret = append(ret, nodeSet)
+		// nodeSet, err := g.nodeSet()
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// ret = append(ret, nodeSet)
 
 	}
 	return ret, nil
 }
 
-func (g *Generator) gatewayConfigMap() *corev1.ConfigMap {
+func (g *StackGenerator) gatewayConfigMap() *corev1.ConfigMap {
 	cfgmap := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      g.stack.ObjectMeta.Name + "-gateway-config",
@@ -80,21 +102,21 @@ var (
 	}
 )
 
-func (g *Generator) gatewayGrpcLogEnvVar() []corev1.EnvVar {
+func (g *StackGenerator) gatewayGrpcLogEnvVar() []corev1.EnvVar {
 	if g.stack.Spec.Gateway.GrpcDebugLogging {
 		return grpcDebugEnvVar
 	}
 	return []corev1.EnvVar{}
 }
 
-func (g *Generator) nodeGrpcLogEnvVar() []corev1.EnvVar {
+func (g *StackGenerator) nodeGrpcLogEnvVar() []corev1.EnvVar {
 	if g.stack.Spec.Node.GrpcDebugLogging {
 		return grpcDebugEnvVar
 	}
 	return []corev1.EnvVar{}
 }
 
-func (g *Generator) gatewayDeployment() (*appsv1.Deployment, error) {
+func (g *StackGenerator) gatewayDeployment() (*appsv1.Deployment, error) {
 	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      g.stack.Name + "-gateway",
@@ -196,15 +218,20 @@ func (g *Generator) gatewayDeployment() (*appsv1.Deployment, error) {
 	return deploy, nil
 }
 
-func (g *Generator) gatewayService() *corev1.Service {
+func gatewaySvcMeta(name, namespace string) metav1.ObjectMeta {
+	return metav1.ObjectMeta{
+		Name:      name + "-gateway",
+		Namespace: namespace,
+	}
+}
+
+func (g *StackGenerator) gatewayService() *corev1.Service {
+	svcMeta := gatewaySvcMeta(g.stack.Name, g.stack.Namespace)
+	svcMeta.Labels = map[string]string{
+		"otel.io/stack": g.stack.Name + "-gateway",
+	}
 	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      g.stack.Name + "-gateway",
-			Namespace: g.stack.Namespace,
-			Labels: map[string]string{
-				"otel.io/stack": g.stack.Name + "-gateway",
-			},
-		},
+		ObjectMeta: svcMeta,
 		Spec: corev1.ServiceSpec{
 			Type: corev1.ServiceTypeClusterIP,
 			Selector: map[string]string{
@@ -233,22 +260,12 @@ func (g *Generator) gatewayService() *corev1.Service {
 	return svc
 }
 
-func (g *Generator) nodeConfig() *corev1.ConfigMap {
-	gwSvc := g.gatewayService()
-	gatewayDns := fmt.Sprintf(serviceFmt, gwSvc.Name, gwSvc.Namespace)
-	cfgmap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      g.stack.Name + "-node-config",
-			Namespace: g.stack.Namespace,
-		},
-		Data: map[string]string{
-			"config.yaml": nodeConfigBase + fmt.Sprintf(nodeExp, gatewayDns),
-		},
-	}
-	return cfgmap
+func (g *StackGenerator) gatewayRefToService(ref *v1alpha1.GatewayRef) (dns string) {
+	svcMeta := gatewaySvcMeta(ref.Name, ref.Namespace)
+	return fmt.Sprintf(serviceFmt, svcMeta.Name, svcMeta.Namespace)
 }
 
-func (g *Generator) nodeService() *corev1.Service {
+func (g *StackGenerator) nodeService() *corev1.Service {
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      g.stack.Name + "-node",
@@ -272,113 +289,6 @@ func (g *Generator) nodeService() *corev1.Service {
 		},
 	}
 	return svc
-}
-
-func (g *Generator) nodeSet() (*appsv1.DaemonSet, error) {
-	nodeCfg := g.nodeConfig()
-	daemonset := &appsv1.DaemonSet{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      g.stack.Name + "-node",
-			Namespace: g.stack.Namespace,
-		},
-		Spec: appsv1.DaemonSetSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"otel.io/stack": g.stack.Name + "-node",
-				},
-			},
-			UpdateStrategy: appsv1.DaemonSetUpdateStrategy{
-				Type: appsv1.RollingUpdateDaemonSetStrategyType,
-			},
-			MinReadySeconds:      0,
-			RevisionHistoryLimit: lo.ToPtr(int32(0)),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      g.stack.Name + "-node",
-					Namespace: g.stack.Namespace,
-					Labels: map[string]string{
-						"otel.io/stack": g.stack.Name + "-node",
-					},
-				},
-				Spec: corev1.PodSpec{
-					Volumes: []corev1.Volume{
-						{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{
-								ConfigMap: &corev1.ConfigMapVolumeSource{
-									DefaultMode: lo.ToPtr(int32(0644)),
-									LocalObjectReference: corev1.LocalObjectReference{
-										Name: nodeCfg.Name,
-									},
-								},
-							},
-						},
-						{
-							Name: "filestorage-extension",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/var/otel/filestorage",
-									Type: lo.ToPtr(corev1.HostPathDirectoryOrCreate),
-								},
-							},
-						},
-						{
-							Name: "varlogpods",
-							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/var/log/pods",
-								},
-							},
-						},
-					},
-					Containers: []corev1.Container{
-						{
-							Name:            "node",
-							ImagePullPolicy: corev1.PullAlways,
-							Command: []string{
-								"collector",
-							},
-							Args: []string{
-								"--config=/var/lib/config.yaml",
-							},
-							Ports: []corev1.ContainerPort{
-								{
-									Name:          "pprof",
-									ContainerPort: 1777,
-								},
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "config",
-									MountPath: "/var/lib",
-									ReadOnly:  true,
-								},
-								{
-									Name:      "filestorage-extension",
-									MountPath: "/var/otel/filestorage",
-								},
-								{
-									Name:      "varlogpods",
-									MountPath: "/var/log/pods",
-									ReadOnly:  true,
-								},
-							},
-							Env: append(
-								[]corev1.EnvVar{},
-								g.nodeGrpcLogEnvVar()...,
-							),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	if err := k8sutil.ApplyGenericImage("node", g.stack.Spec.Node.Image, &daemonset.Spec.Template); err != nil {
-		return nil, err
-	}
-
-	return daemonset, nil
 }
 
 const serviceFmt = "%s.%s.svc.cluster.local"

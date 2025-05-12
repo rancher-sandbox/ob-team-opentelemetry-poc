@@ -12,7 +12,31 @@ import (
 )
 
 type handler struct {
-	Apply apply.Apply
+	Apply           apply.Apply
+	SystemNamespace string
+}
+
+func (h *handler) OnClusterStackChange(key string, stack *v1alpha1.OpenTelemetryClusterStack) (*v1alpha1.OpenTelemetryClusterStack, error) {
+	applier := h.Apply.WithSetID(
+		"node",
+	)
+
+	if stack != nil {
+		applier = applier.WithOwner(stack)
+	}
+
+	g := NewClusterStackGenerator(h.SystemNamespace, stack)
+
+	objs, err := g.Objects()
+	if err != nil {
+		return stack, nil
+	}
+
+	if err := applier.ApplyObjects(objs...); err != nil {
+		return stack, err
+	}
+
+	return stack, nil
 }
 
 func (h *handler) OnStackChange(key string, stack *v1alpha1.OpenTelemetryStack) (*v1alpha1.OpenTelemetryStack, error) {
@@ -24,7 +48,7 @@ func (h *handler) OnStackChange(key string, stack *v1alpha1.OpenTelemetryStack) 
 		applier = applier.WithOwner(stack)
 	}
 
-	g := Generator{
+	g := StackGenerator{
 		stack: stack,
 	}
 
@@ -51,6 +75,7 @@ func (h handler) OnStackRemove(key string, stack *v1alpha1.OpenTelemetryStack) (
 func Register(ctx context.Context, appCtx *setup.AppContext) {
 	// Register the controller
 	h := &handler{
+		SystemNamespace: "cattle-observability-system",
 		Apply: appCtx.Apply.WithCacheTypes(
 			appCtx.Core.Service(),
 			appCtx.Core.ConfigMap(),

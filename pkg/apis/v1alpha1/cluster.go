@@ -8,42 +8,30 @@ import (
 )
 
 // +genclient
+// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-type OpenTelemetryStack struct {
+type OpenTelemetryClusterStack struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              StackSpec   `json:"spec"`
-	Status            StackStatus `json:"status"`
+	Spec              ClusterStackSpec   `json:"spec"`
+	Status            ClusterStackStatus `json:"status"`
 }
 
-type StackSpec struct {
-	Gateway GatewayStack `json:"gateway,omitempty"`
-	Node    NodeStack    `json:"node,omitempty"`
-}
-
-type StackStatus struct {
+type ClusterStackStatus struct {
 	Conditions []genericcondition.GenericCondition `json:"conditions,omitempty"`
 }
 
-type GatewayStack struct {
-	Enabled bool                 `json:"enabled"`
-	Image   generic.GenericImage `json:"image"`
-	// GrpcDebugLogging flag enables the gRPC debug logging from the collector pods
-	GrpcDebugLogging bool `json:"grpcDebugLogging"`
-}
+type ClusterStackSpec struct {
+	GatewayRefs []GatewayRef         `json:"gatewayRefs"`
+	Image       generic.GenericImage `json:"image"`
 
-type NodeStack struct {
-	Enabled bool `json:"enabled"`
-	// GatewayRef is a reference to another gateway stack, if none is specified assume the one
-	// deployed by the current OpenTelemetryStack to be the gateway ref
-	GatewayRef GatewayRef           `json:"gatewayRef"`
-	Image      generic.GenericImage `json:"image"`
-	// GrpcDebugLogging flag enables the gRPC debug logging from the collector pods
-	GrpcDebugLogging bool `json:"grpcDebugLogging"`
-}
-
-type GatewayRef struct {
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
+	// FIXME: these are just example flags for the POC
+	CollectPodLogs   bool
+	CollectAuditLogs bool
+	AuditLogPath     string
+	CollectK3s       bool
+	CollectRKE2      bool
+	RKE2LogPath      string // should be /var/log/journald by default
+	K3sLogPath       string // should be /var/log/journald by default
 }

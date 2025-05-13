@@ -27,3 +27,7 @@ go.work.sum
 kubeconfig.yaml
 bin/
 dev/
+
+rancher-logging-minimal
+rancher-gateway-minimal
+.vscode

@@ -1,0 +1,19 @@
+apiVersion: otel.stack.io/v1alpha1
+kind: OpenTelemetryClusterStack
+metadata:
+  name : clusterstack-example
+spec:
+  image:
+    registry: docker.io
+    repo : alex7285
+    image: otel-logging
+    tag : dev@sha256:ad96ff8c3dbe5ef5e67bf69013d0fea37e955019a365e553f475903de7245c8c
+  collectPodLogs: true
+  collectAuditLogs : true
+  collectK3s : true
+  collectRKE2 : false
+  k3sLogPath : "/var/log/journal"
+  auditLogPath : "/var/log/kube-audit/audit.log"
+  gatewayRefs:
+    - namespace : otel-stack
+      name : stack-example

@@ -9,6 +9,8 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
 	filereloader "github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader"
+	fileprovider "go.opentelemetry.io/collector/confmap/provider/fileprovider"
+	envprovider "go.opentelemetry.io/collector/confmap/provider/envprovider"
 	"go.opentelemetry.io/collector/otelcol"
 )
 
@@ -26,11 +28,15 @@ func main() {
 			ResolverSettings: confmap.ResolverSettings{
 				ProviderFactories: []confmap.ProviderFactory{
 					filereloader.NewFactory(),
+					fileprovider.NewFactory(),
+					envprovider.NewFactory(),
 				},
 			},
 		},
 		ProviderModules: map[string]string{
 			filereloader.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader v0.125.0",
+			fileprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/fileprovider v0.125.0",
+			envprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/envprovider v1.25.0",
     	},
 		ConverterModules: []string{
 		},

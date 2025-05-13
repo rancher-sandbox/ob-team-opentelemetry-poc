@@ -18,6 +18,8 @@ exporters:
   - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.125.0
 providers:
   - gomod: github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader v0.125.0
+  - gomod : go.opentelemetry.io/collector/confmap/provider/fileprovider v0.125.0
+  - gomod : go.opentelemetry.io/collector/confmap/provider/envprovider v1.25.0
 
 replaces:
   - github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader => ../../../provider/filereloader

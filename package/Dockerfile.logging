@@ -1,0 +1,17 @@
+ARG TARGET_ARCH=amd64
+
+FROM registry.suse.com/bci/golang:1.23 AS builder
+WORKDIR /usr/src/app
+COPY ./images/logging/minimal/go.mod ./images/logging/minimal/go.sum ./images/logging/minimal/
+COPY ./provider ./provider
+COPY ./receiver ./receiver
+RUN cd ./images/logging/minimal/ && go mod download
+COPY ./images/logging/minimal/ ./images/logging/minimal/
+RUN cd ./images/logging/minimal/ && go build -o collector -ldflags="-extldflags -static -s -w" .
+
+FROM registry.suse.com/bci/golang:1.23
+RUN zypper -n install net-tools iproute2 systemd
+RUN which ss
+COPY --from=builder /usr/src/app/images/logging/minimal/collector /usr/local/bin/collector
+ENTRYPOINT ["collector"]
+

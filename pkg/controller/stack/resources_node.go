@@ -135,7 +135,7 @@ func (g *ClusterStackGenerator) nodeSet(configMapRef string) (*appsv1.DaemonSet,
 								"collector",
 							},
 							Args: []string{
-								"--config=/var/lib/config.yaml",
+								"--config=filereloader:/var/lib/config.yaml",
 							},
 							Ports: []corev1.ContainerPort{
 								{

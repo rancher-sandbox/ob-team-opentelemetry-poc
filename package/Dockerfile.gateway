@@ -1,0 +1,18 @@
+ARG TARGET_ARCH=amd64
+
+FROM registry.suse.com/bci/golang:1.23 AS builder
+WORKDIR /usr/src/app
+# COPY --from=ocb-getter /usr/local/bin/ocb /usr/local/bin/ocb
+# RUN ocb version
+COPY ./images/gateway/minimal/go.mod ./images/gateway/minimal/go.sum ./images/minimal/gateway/
+COPY ./provider ./provider
+COPY ./receiver ./receiver
+RUN cd ./images/minimal/gateway/ && go mod download
+COPY ./images/gateway/minimal/ ./images/gateway/minimal/
+RUN cd ./images/gateway/minimal && go build -o collector -ldflags="-extldflags -static -s -w" .
+
+FROM registry.suse.com/bci/golang:1.23
+RUN zypper -n install net-tools iproute2
+RUN which ss
+COPY --from=builder /usr/src/app/images/gateway/minimal/collector /usr/local/bin/collector
+ENTRYPOINT ["collector"]

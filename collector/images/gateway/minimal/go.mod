@@ -2,7 +2,9 @@
 
 module github.com/rancher-sandbox/ob-team-opentelemetry-poc/images/gateway/minimal
 
-go 1.24.1
+go 1.23.0
+
+toolchain go1.24.1
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckv2extension v0.125.0
@@ -11,6 +13,8 @@ require (
 	github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader v0.125.0
 	go.opentelemetry.io/collector/component v1.31.0
 	go.opentelemetry.io/collector/confmap v1.32.0
+	go.opentelemetry.io/collector/confmap/provider/envprovider v1.25.0
+	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.31.0
 	go.opentelemetry.io/collector/connector v0.125.0
 	go.opentelemetry.io/collector/exporter v0.125.0
 	go.opentelemetry.io/collector/exporter/debugexporter v0.125.0

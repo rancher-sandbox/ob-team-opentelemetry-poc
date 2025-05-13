@@ -2,21 +2,15 @@
 
 module github.com/rancher-sandbox/ob-team-opentelemetry-poc/images/gateway/minimal
 
-go 1.23.0
-
-toolchain go1.24.1
+go 1.24.1
 
 require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckv2extension v0.125.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.125.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.125.0
+	github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader v0.125.0
 	go.opentelemetry.io/collector/component v1.31.0
-	go.opentelemetry.io/collector/confmap v1.31.0
-	go.opentelemetry.io/collector/confmap/provider/envprovider v1.31.0
-	go.opentelemetry.io/collector/confmap/provider/fileprovider v1.31.0
-	go.opentelemetry.io/collector/confmap/provider/httpprovider v1.31.0
-	go.opentelemetry.io/collector/confmap/provider/httpsprovider v1.31.0
-	go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.31.0
+	go.opentelemetry.io/collector/confmap v1.32.0
 	go.opentelemetry.io/collector/connector v0.125.0
 	go.opentelemetry.io/collector/exporter v0.125.0
 	go.opentelemetry.io/collector/exporter/debugexporter v0.125.0
@@ -49,6 +43,7 @@ require (
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
@@ -128,7 +123,7 @@ require (
 	go.opentelemetry.io/collector/extension/extensionmiddleware v0.125.0 // indirect
 	go.opentelemetry.io/collector/extension/extensiontest v0.125.0 // indirect
 	go.opentelemetry.io/collector/extension/xextension v0.125.0 // indirect
-	go.opentelemetry.io/collector/featuregate v1.31.0 // indirect
+	go.opentelemetry.io/collector/featuregate v1.32.0 // indirect
 	go.opentelemetry.io/collector/internal/fanoutconsumer v0.125.0 // indirect
 	go.opentelemetry.io/collector/internal/sharedcomponent v0.125.0 // indirect
 	go.opentelemetry.io/collector/internal/telemetry v0.125.0 // indirect
@@ -197,3 +192,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.2 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader => ../../../provider/filereloader

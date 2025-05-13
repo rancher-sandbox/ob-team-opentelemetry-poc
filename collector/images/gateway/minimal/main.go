@@ -8,11 +8,7 @@ import (
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/confmap"
-	envprovider "go.opentelemetry.io/collector/confmap/provider/envprovider"
-	fileprovider "go.opentelemetry.io/collector/confmap/provider/fileprovider"
-	httpprovider "go.opentelemetry.io/collector/confmap/provider/httpprovider"
-	httpsprovider "go.opentelemetry.io/collector/confmap/provider/httpsprovider"
-	yamlprovider "go.opentelemetry.io/collector/confmap/provider/yamlprovider"
+	filereloader "github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader"
 	"go.opentelemetry.io/collector/otelcol"
 )
 
@@ -29,20 +25,12 @@ func main() {
 		ConfigProviderSettings: otelcol.ConfigProviderSettings{
 			ResolverSettings: confmap.ResolverSettings{
 				ProviderFactories: []confmap.ProviderFactory{
-					envprovider.NewFactory(),
-					fileprovider.NewFactory(),
-					httpprovider.NewFactory(),
-					httpsprovider.NewFactory(),
-					yamlprovider.NewFactory(),
+					filereloader.NewFactory(),
 				},
 			},
 		},
 		ProviderModules: map[string]string{
-			envprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/envprovider v1.31.0",
-			fileprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/fileprovider v1.31.0",
-			httpprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/httpprovider v1.31.0",
-			httpsprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/httpsprovider v1.31.0",
-			yamlprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.31.0",
+			filereloader.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "github.com/rancher-sandbox/ob-team-opentelemetry-poc/collector/provider/filereloader v0.125.0",
     	},
 		ConverterModules: []string{
 		},

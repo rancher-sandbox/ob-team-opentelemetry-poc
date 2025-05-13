@@ -1,0 +1,9 @@
+type: filereloader
+
+status:
+  class: provider
+  stability:
+    alpha: [provider]
+  distributions: [rancher]
+  codeowners:
+    active: [alexandreLamarre]

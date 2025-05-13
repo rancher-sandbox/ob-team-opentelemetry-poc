@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"path"
+
 	"github.com/rancher-sandbox/ob-team-opentelemetry-poc/pkg/k8sutil"
 	"github.com/samber/lo"
 	"gopkg.in/yaml.v3"
@@ -74,7 +76,7 @@ func (g *ClusterStackGenerator) nodeSet(configMapRef string) (*appsv1.DaemonSet,
 					Name:      g.clusterstack.Name + "-otel-node",
 					Namespace: g.systemNamespace,
 					Labels: map[string]string{
-						"otel.io/stack": g.clusterstack.Name + "-node",
+						"otel.io/stack": g.clusterstack.Name + "otel-node",
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -99,11 +101,28 @@ func (g *ClusterStackGenerator) nodeSet(configMapRef string) (*appsv1.DaemonSet,
 								},
 							},
 						},
+						// TODO: the following mounts/volume mounts need to be configurable
 						{
 							Name: "varlogpods",
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/var/log/pods",
+								},
+							},
+						},
+						{
+							Name: "journal",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/var/log/journal",
+								},
+							},
+						},
+						{
+							Name: "auditlogs",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: path.Dir(g.clusterstack.Spec.AuditLogPath),
 								},
 							},
 						},
@@ -137,6 +156,16 @@ func (g *ClusterStackGenerator) nodeSet(configMapRef string) (*appsv1.DaemonSet,
 								{
 									Name:      "varlogpods",
 									MountPath: "/var/log/pods",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "journal",
+									MountPath: "/var/log/journal",
+									ReadOnly:  true,
+								},
+								{
+									Name:      "auditlogs",
+									MountPath: path.Dir(g.clusterstack.Spec.AuditLogPath),
 									ReadOnly:  true,
 								},
 							},

@@ -8,8 +8,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/adapter"
-	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/operator/input/journald"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/receiver/journaldreceiver"
 	"github.com/rancher-sandbox/ob-team-opentelemetry-poc/internal/encoder"
@@ -18,8 +16,10 @@ import (
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config/configgrpc"
 	"go.opentelemetry.io/collector/config/confignet"
+	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/config/configtelemetry"
 	"go.opentelemetry.io/collector/exporter/debugexporter"
+	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
 )
 
@@ -195,6 +195,7 @@ func (g *ClusterStackGenerator) constructAuditLogReceiver() (any, error) {
 	}
 	if err := AuditConfigTemplate.Execute(&b, AuditConfigParams{
 		AuditLogPath: auditPath,
+		StorageId:    g.storageId().String(),
 	}); err != nil {
 		return "", err
 	}
@@ -202,35 +203,39 @@ func (g *ClusterStackGenerator) constructAuditLogReceiver() (any, error) {
 }
 
 // FIXME: perhaps we also want to wrap this in our own receiver
-func (g *ClusterStackGenerator) constructK3sJournaldReceiver() (any, error) {
-	k3sPath := g.clusterstack.Spec.K3sLogPath
-	if k3sPath == "" {
+func (g *ClusterStackGenerator) constructRke2JournaldReceiver() (any, error) {
+	rke2Path := g.clusterstack.Spec.RKE2LogPath
+	if rke2Path == "" {
 		return nil, fmt.Errorf("empty rke2 journald path")
 	}
-	cfg := journaldreceiver.JournaldConfig{
-		BaseConfig: adapter.BaseConfig{},
-		InputConfig: journald.Config{
-			Units:     []string{"rke2-server", "rke2-agent"},
-			Directory: lo.ToPtr(k3sPath),
-		},
+	var b bytes.Buffer
+	if err := RK2JournalConfigTemplate.Execute(&b, RKE2JournalParams{
+		JournalPath: rke2Path,
+		StorageId:   g.storageId().String(),
+	}); err != nil {
+		return nil, err
 	}
-	enc := g.encoder()
-	return enc.Encode(cfg)
+
+	return yamlMarshalString(b.String())
 }
 
 // FIXME: perhaps we also want to wrap this in our own receiver
-func (g *ClusterStackGenerator) constructRke2JournaldReceiver() (any, error) {
-	cfg := journaldreceiver.JournaldConfig{
-		BaseConfig: adapter.BaseConfig{
-			// TODO ?
-		},
-		InputConfig: journald.Config{
-			Units:     []string{"k3s"},
-			Directory: lo.ToPtr("TODO"),
-		},
+func (g *ClusterStackGenerator) constructK3sJournaldReceiver() (any, error) {
+	k3sPath := g.clusterstack.Spec.K3sLogPath
+	if k3sPath == "" {
+		return nil, fmt.Errorf("empty k3s journald path")
 	}
-	enc := g.encoder()
-	return enc.Encode(cfg)
+	var b bytes.Buffer
+
+	if err := K3sJournalConfigTemplate.Execute(&b, K3sJournalParams{
+		JournalPath: k3sPath,
+		StorageId:   g.storageId().String(),
+	}); err != nil {
+		return nil, err
+	}
+
+	return yamlMarshalString(b.String())
+
 }
 
 // FIXME: perhaps wrap this / find ways to validate this better
@@ -286,8 +291,12 @@ func (g *ClusterStackGenerator) constructExporters() error {
 
 		config := otlpexporter.Config{
 			ClientConfig: configgrpc.ClientConfig{
-				Endpoint: fmt.Sprintf("%s:%d", dns, 4618),
+				Endpoint: fmt.Sprintf("%s:%d", dns, 4317),
 			},
+			TimeoutConfig: exporterhelper.NewDefaultTimeoutConfig(),
+			QueueConfig:   exporterhelper.NewDefaultQueueConfig(),
+			BatcherConfig: exporterhelper.NewDefaultBatcherConfig(),
+			RetryConfig:   configretry.NewDefaultBackOffConfig(),
 		}
 
 		if err := config.Validate(); err != nil {

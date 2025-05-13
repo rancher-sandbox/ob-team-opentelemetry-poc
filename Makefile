@@ -4,6 +4,7 @@
 VERSION?=dev
 TARGET?=gateway
 TYPE?=minimal
+REPO?=rancher-sandbox
 
 collector:
 	ocb --config=./collector/$(TARGET)-$(TYPE).yaml --skip-compilation
@@ -16,6 +17,6 @@ build:
 
 images:
 	@echo "Building gateway"
-	docker build ./collector/images/gateway/minimal/ -t rancher-sandbox/gateway:$(VERSION) -f ./collector/images/gateway/minimal/Dockerfile
+	docker build ./collector/images/gateway/minimal/ -t $(REPO)/gateway:$(VERSION) -f ./collector/images/gateway/minimal/Dockerfile
 	@echo "Building logging collector"
-	docker build ./collector/images/logging/minimal/ -t rancher-sandbox/node:$(VERSION) -f ./collector/images/logging/minimal/Dockerfile
+	docker build ./collector/images/logging/minimal/ -t $(REPO)/node:$(VERSION) -f ./collector/images/logging/minimal/Dockerfile

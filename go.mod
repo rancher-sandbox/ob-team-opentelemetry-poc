@@ -9,17 +9,19 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.125.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/extension/storage/filestorage v0.125.0
-	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.125.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/filelogreceiver v0.125.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/journaldreceiver v0.125.0
 	github.com/rancher/lasso v0.2.1
 	github.com/rancher/wrangler/v3 v3.2.0
 	github.com/samber/lo v1.50.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/collector/component v1.31.0
 	go.opentelemetry.io/collector/config/configgrpc v0.125.0
 	go.opentelemetry.io/collector/config/confignet v1.31.0
+	go.opentelemetry.io/collector/config/configretry v1.31.0
 	go.opentelemetry.io/collector/config/configtelemetry v0.125.0
+	go.opentelemetry.io/collector/exporter v0.125.0
 	go.opentelemetry.io/collector/exporter/debugexporter v0.125.0
 	go.opentelemetry.io/collector/exporter/otlpexporter v0.125.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -73,13 +75,13 @@ require (
 	github.com/mostynb/go-grpc-compression v1.2.3 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.125.0 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza v0.125.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.20.5 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -92,7 +94,6 @@ require (
 	go.opentelemetry.io/collector/config/configcompression v1.31.0 // indirect
 	go.opentelemetry.io/collector/config/configmiddleware v0.125.0 // indirect
 	go.opentelemetry.io/collector/config/configopaque v1.31.0 // indirect
-	go.opentelemetry.io/collector/config/configretry v1.31.0 // indirect
 	go.opentelemetry.io/collector/config/configtls v1.31.0 // indirect
 	go.opentelemetry.io/collector/confmap v1.31.0 // indirect
 	go.opentelemetry.io/collector/consumer v1.31.0 // indirect
@@ -100,7 +101,6 @@ require (
 	go.opentelemetry.io/collector/consumer/consumererror/xconsumererror v0.125.0 // indirect
 	go.opentelemetry.io/collector/consumer/consumertest v0.125.0 // indirect
 	go.opentelemetry.io/collector/consumer/xconsumer v0.125.0 // indirect
-	go.opentelemetry.io/collector/exporter v0.125.0 // indirect
 	go.opentelemetry.io/collector/exporter/exporterhelper/xexporterhelper v0.125.0 // indirect
 	go.opentelemetry.io/collector/exporter/xexporter v0.125.0 // indirect
 	go.opentelemetry.io/collector/extension v1.31.0 // indirect

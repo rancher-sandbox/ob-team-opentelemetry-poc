@@ -15,6 +15,7 @@ func init() {
 }
 
 type Interface interface {
+	OpenTelemetryClusterStack() OpenTelemetryClusterStackController
 	OpenTelemetryStack() OpenTelemetryStackController
 }
 
@@ -26,6 +27,10 @@ func New(controllerFactory controller.SharedControllerFactory) Interface {
 
 type version struct {
 	controllerFactory controller.SharedControllerFactory
+}
+
+func (v *version) OpenTelemetryClusterStack() OpenTelemetryClusterStackController {
+	return generic.NewNonNamespacedController[*v1alpha1.OpenTelemetryClusterStack, *v1alpha1.OpenTelemetryClusterStackList](schema.GroupVersionKind{Group: "otel.stack.io", Version: "v1alpha1", Kind: "OpenTelemetryClusterStack"}, "opentelemetryclusterstacks", v.controllerFactory)
 }
 
 func (v *version) OpenTelemetryStack() OpenTelemetryStackController {

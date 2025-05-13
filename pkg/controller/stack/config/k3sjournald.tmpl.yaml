@@ -1,0 +1,4 @@
+directory: {{ .JournalPath }}
+storage: {{ .StorageId }}
+units:
+    - k3s

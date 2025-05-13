@@ -27,6 +27,7 @@ func main() {
 			"otel.stack.io": {
 				Types: []interface{}{
 					v1alpha1.OpenTelemetryStack{},
+					v1alpha1.OpenTelemetryClusterStack{},
 				},
 				GenerateTypes: true,
 			},

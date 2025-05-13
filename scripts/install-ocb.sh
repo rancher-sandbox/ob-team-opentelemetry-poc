@@ -1,6 +1,6 @@
 # let us download a file with curl on Linux command line #
 
-VERSION="0.120.0" # otel collector version
+VERSION="0.125.0" # otel collector version
 ARCH="amd64" # go archicture
 URL="https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/cmd%2Fbuilder%2Fv${VERSION}/ocb_${VERSION}_linux_${ARCH}"
 

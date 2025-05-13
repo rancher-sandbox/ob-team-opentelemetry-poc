@@ -1,0 +1,5 @@
+directory: {{ .JournalPath }}
+storage: {{ .StorageId }}
+units:
+    - rke2-server
+    - rke2-agent

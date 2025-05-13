@@ -1,5 +1,5 @@
 include: [ {{ .AuditLogPath }} ]
-storage: file_storage
+storage: {{ .StorageId }}
 include_file_path: false
 include_file_name: false
 operators:

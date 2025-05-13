@@ -24,10 +24,12 @@ func main() {
 		panic(err)
 	}
 
-	requiredCrd := crd.NamespacedType("OpenTelemetryStack.odin.stack.io/v1alpha1").WithSchemaFromStruct(&v1alpha1.OpenTelemetryStack{})
+	stackCrd := crd.NamespacedType("OpenTelemetryStack.otel.stack.io/v1alpha1").WithSchemaFromStruct(&v1alpha1.OpenTelemetryStack{})
+	clusterStackCrd := crd.NonNamespacedType("OpenTelemetryClusterStack.otel.stack.io/v1alpha1").WithSchemaFromStruct(&v1alpha1.OpenTelemetryClusterStack{})
 
 	if err := createCrd(ctx, client, []crd.CRD{
-		requiredCrd,
+		stackCrd,
+		clusterStackCrd,
 	}); err != nil {
 		panic(err)
 	}

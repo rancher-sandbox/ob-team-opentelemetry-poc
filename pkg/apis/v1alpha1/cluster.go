@@ -27,11 +27,11 @@ type ClusterStackSpec struct {
 	Image       generic.GenericImage `json:"image"`
 
 	// FIXME: these are just example flags for the POC
-	CollectPodLogs   bool
-	CollectAuditLogs bool
-	AuditLogPath     string
-	CollectK3s       bool
-	CollectRKE2      bool
-	RKE2LogPath      string // should be /var/log/journald by default
-	K3sLogPath       string // should be /var/log/journald by default
+	CollectPodLogs   bool   `json:"collectPodLogs"`
+	CollectAuditLogs bool   `json:"collectAuditLogs"`
+	AuditLogPath     string `json:"auditLogPath"`
+	CollectK3s       bool   `json:"collectK3s"`
+	CollectRKE2      bool   `json:"collectRKE2"`
+	RKE2LogPath      string `json:"rke2LogPath"` // should be /var/log/journald by default
+	K3sLogPath       string `json:"k3sLogPath"`  // should be /var/log/journald by default
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/rancher/wrangler/v3/pkg/apply"
 	"github.com/rancher/wrangler/v3/pkg/relatedresource"
 	"github.com/samber/lo"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -22,20 +23,28 @@ func (h *handler) OnClusterStackChange(key string, stack *v1alpha1.OpenTelemetry
 	)
 
 	if stack != nil {
+		logrus.Infof("Generating stack with namespace : %s for crd : %s", h.SystemNamespace, stack.Name)
 		applier = applier.WithOwner(stack)
 	}
-
 	g := NewClusterStackGenerator(h.SystemNamespace, stack)
 
 	objs, err := g.Objects()
 	if err != nil {
+		logrus.Errorf("failed to construct objects : %s", err)
 		return stack, nil
 	}
 
+	logrus.Infof("applying : %d objects for stack : %s", len(objs), stack.Name)
+
 	if err := applier.ApplyObjects(objs...); err != nil {
+		logrus.Errorf("failed to apply objects : %s", err)
 		return stack, err
 	}
 
+	return stack, nil
+}
+
+func (h *handler) OnClusterStackRemove(key string, stack *v1alpha1.OpenTelemetryClusterStack) (*v1alpha1.OpenTelemetryClusterStack, error) {
 	return stack, nil
 }
 
@@ -98,4 +107,6 @@ func Register(ctx context.Context, appCtx *setup.AppContext) {
 	appCtx.Stack.OnChange(ctx, "stack-controller", h.OnStackChange)
 	appCtx.Stack.OnRemove(ctx, "stack-controller", h.OnStackRemove)
 
+	appCtx.ClusterStack.OnChange(ctx, "cluster-stack-controller", h.OnClusterStackChange)
+	appCtx.ClusterStack.OnRemove(ctx, "cluster-stack-controller", h.OnClusterStackRemove)
 }

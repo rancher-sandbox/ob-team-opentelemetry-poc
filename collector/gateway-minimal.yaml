@@ -1,18 +1,18 @@
 dist:
   module: github.com/rancher-sandbox/ob-team-opentelemetry-poc/images/gateway/minimal
   output_path: ./collector/images/gateway/minimal/
-  name: rancher-logging-minimal
+  name: rancher-gateway-minimal
   description: (Minimal) OpenTelemetry Collector for Rancher Logging
-  version: 0.1.0+up0.120.0
+  version: 0.1.0+up0.125.0
 
 receivers:
-  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.120.0
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.125.0
 processors:
-  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.120.0
-  - gomod : github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.120.0
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.125.0
+  - gomod : github.com/open-telemetry/opentelemetry-collector-contrib/processor/k8sattributesprocessor v0.125.0
 extensions:
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckv2extension v0.120.0 
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.120.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckv2extension v0.125.0 
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/pprofextension v0.125.0
 exporters:
-  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.120.0
-  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.120.0
+  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.125.0
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.125.0

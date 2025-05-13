@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"os"
 	"testing"
 
 	"github.com/rancher-sandbox/ob-team-opentelemetry-poc/pkg/apis/v1alpha1"
@@ -98,7 +99,6 @@ func TestClusterStackGeneratorReceiver(t *testing.T) {
 	}
 
 	for _, stack := range tc {
-
 		g := NewClusterStackGenerator(testNs, stack)
 		err := g.constructReceivers()
 		require.NoError(t, err)
@@ -112,6 +112,12 @@ func TestClusterStackGeneratorReceiver(t *testing.T) {
 func TestClusterStackGeneratorOpenTelemetryConfig(t *testing.T) {
 	all := &v1alpha1.OpenTelemetryClusterStack{
 		Spec: v1alpha1.ClusterStackSpec{
+			GatewayRefs: []v1alpha1.GatewayRef{
+				{
+					Name:      "test",
+					Namespace: "test",
+				},
+			},
 			CollectPodLogs:   true,
 			CollectAuditLogs: true,
 			CollectK3s:       true,
@@ -133,5 +139,6 @@ func TestClusterStackGeneratorOpenTelemetryConfig(t *testing.T) {
 		rawBytes, err := yaml.Marshal(g.managedConfig)
 		require.NoError(t, err)
 		require.NotEmpty(t, rawBytes)
+		os.WriteFile("config.yaml", rawBytes, 0777)
 	}
 }

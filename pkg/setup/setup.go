@@ -19,11 +19,12 @@ type AppContext struct {
 	context.Context
 	threadiness int
 
-	Core     corecontroller.Interface
-	Apps     appcontroller.Interface
-	Stack    v1alpha1.OpenTelemetryStackController
-	Apply    apply.Apply
-	starters []start.Starter
+	Core         corecontroller.Interface
+	Apps         appcontroller.Interface
+	Stack        v1alpha1.OpenTelemetryStackController
+	ClusterStack v1alpha1.OpenTelemetryClusterStackController
+	Apply        apply.Apply
+	starters     []start.Starter
 }
 
 func (a *AppContext) Start(ctx context.Context) error {
@@ -59,12 +60,13 @@ func NewAppContext(ctx context.Context, threadiness int, cfg clientcmd.ClientCon
 	appsv1 := apps.Apps().V1()
 	corev1 := core.Core().V1()
 	return &AppContext{
-		Core:        corev1,
-		Apps:        appsv1,
-		Stack:       stack.Otel().V1alpha1().OpenTelemetryStack(),
-		Context:     ctx,
-		threadiness: threadiness,
-		Apply:       applier,
+		Core:         corev1,
+		Apps:         appsv1,
+		Stack:        stack.Otel().V1alpha1().OpenTelemetryStack(),
+		ClusterStack: stack.Otel().V1alpha1().OpenTelemetryClusterStack(),
+		Context:      ctx,
+		threadiness:  threadiness,
+		Apply:        applier,
 		starters: []start.Starter{
 			core,
 			apps,

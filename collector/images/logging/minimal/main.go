@@ -20,7 +20,7 @@ func main() {
 	info := component.BuildInfo{
 		Command:     "rancher-logging-minimal",
 		Description: "(Minimal) OpenTelemetry Collector for Rancher Logging",
-		Version:     "0.1.0+up0.120.0",
+		Version:     "0.1.0+up0.125.0",
 	}
 
 	set := otelcol.CollectorSettings{
@@ -36,13 +36,16 @@ func main() {
 					yamlprovider.NewFactory(),
 				},
 			},
-		}, ProviderModules: map[string]string{
-			envprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/envprovider v1.26.0",
-			fileprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/fileprovider v1.26.0",
-			httpprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/httpprovider v1.26.0",
-			httpsprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/httpsprovider v1.26.0",
-			yamlprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.26.0",
-           },
+		},
+		ProviderModules: map[string]string{
+			envprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/envprovider v1.31.0",
+			fileprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/fileprovider v1.31.0",
+			httpprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/httpprovider v1.31.0",
+			httpsprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/httpsprovider v1.31.0",
+			yamlprovider.NewFactory().Create(confmap.ProviderSettings{}).Scheme(): "go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.31.0",
+    	},
+		ConverterModules: []string{
+		},
 	}
 
 	if err := run(set); err != nil {

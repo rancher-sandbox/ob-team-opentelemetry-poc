@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"os"
 	"testing"
 
 	"github.com/rancher-sandbox/ob-team-opentelemetry-poc/pkg/apis/v1alpha1"
@@ -139,7 +138,6 @@ func TestClusterStackGeneratorOpenTelemetryConfig(t *testing.T) {
 		rawBytes, err := yaml.Marshal(g.managedConfig)
 		require.NoError(t, err)
 		require.NotEmpty(t, rawBytes)
-		os.WriteFile("config.yaml", rawBytes, 0777)
 	}
 }
 

@@ -1,0 +1,38 @@
+exporters:
+    debug: null
+    opensearch:
+        http:
+            auth:
+                authenticator: basicauth/opensearch
+            endpoint: https://opensearch.example.com:9200
+extensions:
+    basicauth/opensearch:
+      client_auth:
+          password: oBTeamPass123
+          username: admin
+    healthcheckv2: null
+    pprof:
+        endpoint: 0.0.0.0:1777
+processors:
+    batch: null
+receivers:
+    otlp:
+        protocols:
+            grpc:
+                endpoint: 0.0.0.0:4317
+            http:
+                endpoint: 0.0.0.0:4318
+service:
+    extensions:
+        - basicauth/opensearch
+        - healthcheckv2
+        - pprof
+    pipelines:
+        logs:
+            exporters:
+                - debug
+                - opensearch
+            processors:
+                - batch
+            receivers:
+                - otlp

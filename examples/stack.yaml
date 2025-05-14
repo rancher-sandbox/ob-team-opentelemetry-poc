@@ -10,14 +10,6 @@ spec:
       # tag: 1.37.0
       registry: docker.io
       repo : alex7285
-      image : gateway
-      tag : dev
-    grpcDebugLogging : true
-  node:
-    enabled: true
-    image:
-      registry: docker.io
-      repo : alex7285
-      image : node
-      tag : dev
+      image : otel-gateway
+      tag : dev@sha256:babc7ab4702915859b95cca0e5dd64d1e0e01735d3069ca82ef6b662f71d8aa5
     grpcDebugLogging : true

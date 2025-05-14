@@ -31,6 +31,13 @@ For the daemonset this namespace must exist:
 kubectl create ns cattle-observability-system
 ```
 
+To run currently you need to create this path:
+
+```sh
+sudo mkdir -p /var/otel/storage
+sudo chown $USER /var/otel/storage
+```
+
 Run operator:
 ```sh
 make build && ./bin/operator

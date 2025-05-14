@@ -6,6 +6,8 @@ import (
 	"github.com/rancher-sandbox/ob-team-opentelemetry-poc/pkg/apis/v1alpha1"
 	"github.com/rancher-sandbox/ob-team-opentelemetry-poc/pkg/k8sutil"
 	"github.com/samber/lo"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +18,7 @@ import (
 const (
 	configServices   = "service"
 	configPipelines  = "pipelines"
+	configProcessors = "processors"
 	configExporters  = "exporters"
 	configExtensions = "extensions"
 	configReceivers  = "receivers"
@@ -36,57 +39,168 @@ func NewClusterStackGenerator(systemNamespace string, stack *v1alpha1.OpenTeleme
 }
 
 type StackGenerator struct {
-	stack *v1alpha1.OpenTelemetryStack
+	stack         *v1alpha1.OpenTelemetryStack
+	managedConfig map[string]any
+}
+
+func NewStackGenerator(stack *v1alpha1.OpenTelemetryStack) *StackGenerator {
+	return &StackGenerator{
+		stack:         stack,
+		managedConfig: map[string]any{},
+	}
 }
 
 func (g *StackGenerator) Objects() ([]runtime.Object, error) {
 	if g.stack == nil {
+		logrus.Info("stack is nil")
 		return []runtime.Object{}, nil
 	}
 
 	ret := []runtime.Object{}
 	if g.stack.Spec.Gateway.Enabled {
-		gwCfg := g.gatewayConfigMap()
+		logrus.Info("gateway enabled")
+		gwCfg, err := g.gatewayConfigMap()
+		if err != nil {
+			return nil, err
+		}
+		logrus.Info("adding config map")
 		ret = append(ret, gwCfg)
 
 		gwDeploy, err := g.gatewayDeployment()
 		if err != nil {
 			return nil, err
 		}
+		logrus.Info("adding deploy")
 		ret = append(ret, gwDeploy)
-
+		logrus.Info("adding service")
 		gwSvc := g.gatewayService()
 		ret = append(ret, gwSvc)
-	}
-
-	if g.stack.Spec.Node.Enabled {
-		// nodeCfg := g.nodeConfig()
-		// ret = append(ret, nodeCfg)
-
-		// nodeSvc := g.nodeService()
-		// ret = append(ret, nodeSvc)
-
-		// nodeSet, err := g.nodeSet()
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// ret = append(ret, nodeSet)
-
 	}
 	return ret, nil
 }
 
-func (g *StackGenerator) gatewayConfigMap() *corev1.ConfigMap {
+func (g *StackGenerator) configMapMeta() metav1.ObjectMeta {
+	return metav1.ObjectMeta{
+		Name:      g.stack.ObjectMeta.Name + "-gateway-config",
+		Namespace: g.stack.ObjectMeta.Namespace,
+	}
+}
+
+func (g *StackGenerator) gatewayConfigMap() (*corev1.ConfigMap, error) {
+	if err := g.constructOpenTelemetryConfig(); err != nil {
+		return nil, err
+	}
+
+	gatewayConfig, err := yaml.Marshal(g.managedConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	cfgmap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      g.stack.ObjectMeta.Name + "-gateway-config",
-			Namespace: g.stack.ObjectMeta.Namespace,
-		},
+		ObjectMeta: g.configMapMeta(),
 		Data: map[string]string{
-			"config.yaml": gatewayConfig,
+			"config.yaml": string(gatewayConfig),
 		},
 	}
-	return cfgmap
+	return cfgmap, nil
+}
+
+func (g *StackGenerator) constructOpenTelemetryConfig() error {
+	if err := g.constructExtensions(); err != nil {
+		return fmt.Errorf("failed to construct extensions : %w", err)
+	}
+
+	if err := g.constructProcessors(); err != nil {
+		return fmt.Errorf("failed to construct processors : %w", err)
+	}
+
+	if err := g.constructReceivers(); err != nil {
+		return fmt.Errorf("failed to construct receivers : %w", err)
+	}
+
+	if err := g.constructExporters(); err != nil {
+		return fmt.Errorf("failed to construct exporters : %w", err)
+	}
+
+	if err := g.constructPipelines(); err != nil {
+		return fmt.Errorf("failed to construct pipelines")
+	}
+	return nil
+}
+
+func (g *StackGenerator) constructProcessors() error {
+	proc, err := yamlMarshalString(gatewayProcessors)
+	if err != nil {
+		return err
+	}
+
+	g.managedConfig[configProcessors] = proc
+	return nil
+}
+
+func (g *StackGenerator) constructExtensions() error {
+	ext, err := yamlMarshalString(gatewayExtensions)
+	if err != nil {
+		return err
+	}
+	g.managedConfig[configExtensions] = ext
+	return nil
+}
+
+func (g *StackGenerator) constructReceivers() error {
+	recv, err := yamlMarshalString(gatewayReceivers)
+	if err != nil {
+		return err
+	}
+	g.managedConfig[configReceivers] = recv
+	return nil
+}
+
+func (g *StackGenerator) constructExporters() error {
+	exp, err := yamlMarshalString(gatewayExporters)
+	if err != nil {
+		return err
+	}
+	g.managedConfig[configExporters] = exp
+	return nil
+}
+
+func (g *StackGenerator) constructPipelines() error {
+	extensionMap, ok := g.managedConfig[configExtensions].(map[string]any)
+	if !ok {
+		return fmt.Errorf("internal error, couldn't extract extensions from managed config")
+	}
+
+	receiverMap, ok := g.managedConfig[configReceivers].(map[string]any)
+	if !ok {
+		return fmt.Errorf("internal error, couldn't extract receivers from managed config")
+	}
+
+	exporterMap, ok := g.managedConfig[configExporters].(map[string]any)
+	if !ok {
+		return fmt.Errorf("internal error, couldn't extract exporters from managed config")
+	}
+
+	processorMap, ok := g.managedConfig[configProcessors].(map[string]any)
+	if !ok {
+		return fmt.Errorf("internal error, couldn't extract processors from managed config")
+	}
+
+	registeredExtensions := lo.Keys(extensionMap)
+	registeredReceivers := lo.Keys(receiverMap)
+	registeredExporters := lo.Keys(exporterMap)
+	registeredProcessors := lo.Keys(processorMap)
+	g.managedConfig[configServices] = map[string]any{
+		configExtensions: registeredExtensions,
+		configPipelines: map[string]any{
+			"logs": map[string]any{
+				"receivers":  registeredReceivers,
+				"processors": registeredProcessors,
+				"exporters":  registeredExporters,
+			},
+		},
+	}
+	return nil
 }
 
 var (
@@ -109,14 +223,8 @@ func (g *StackGenerator) gatewayGrpcLogEnvVar() []corev1.EnvVar {
 	return []corev1.EnvVar{}
 }
 
-func (g *StackGenerator) nodeGrpcLogEnvVar() []corev1.EnvVar {
-	if g.stack.Spec.Node.GrpcDebugLogging {
-		return grpcDebugEnvVar
-	}
-	return []corev1.EnvVar{}
-}
-
 func (g *StackGenerator) gatewayDeployment() (*appsv1.Deployment, error) {
+	configMeta := g.configMapMeta()
 	deploy := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      g.stack.Name + "-gateway",
@@ -151,7 +259,7 @@ func (g *StackGenerator) gatewayDeployment() (*appsv1.Deployment, error) {
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									DefaultMode: lo.ToPtr(int32(0644)),
 									LocalObjectReference: corev1.LocalObjectReference{
-										Name: g.gatewayConfigMap().Name,
+										Name: configMeta.Name,
 									},
 								},
 							},
@@ -167,7 +275,7 @@ func (g *StackGenerator) gatewayDeployment() (*appsv1.Deployment, error) {
 							Args: []string{
 								// "sleep",
 								// "3600",
-								"--config=/var/lib/config.yaml",
+								"--config=filereloader:/var/lib/config.yaml",
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -260,38 +368,37 @@ func (g *StackGenerator) gatewayService() *corev1.Service {
 	return svc
 }
 
-func (g *StackGenerator) gatewayRefToService(ref *v1alpha1.GatewayRef) (dns string) {
-	svcMeta := gatewaySvcMeta(ref.Name, ref.Namespace)
-	return fmt.Sprintf(serviceFmt, svcMeta.Name, svcMeta.Namespace)
-}
-
-func (g *StackGenerator) nodeService() *corev1.Service {
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      g.stack.Name + "-node",
-			Namespace: g.stack.Namespace,
-			Labels: map[string]string{
-				"otel.io/stack": g.stack.Name + "-node",
-			},
-		},
-		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceTypeClusterIP,
-			Selector: map[string]string{
-				"otel.io/stack": g.stack.Name + "-node",
-			},
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "pprof",
-					Port:       1777,
-					TargetPort: intstr.FromString("pprof"),
-				},
-			},
-		},
-	}
-	return svc
-}
-
 const serviceFmt = "%s.%s.svc.cluster.local"
+
+const gatewayReceivers = `
+otlp:
+  protocols:
+    grpc:
+      endpoint: 0.0.0.0:4317
+    http:
+      endpoint: 0.0.0.0:4318
+`
+
+const gatewayProcessors = `batch:`
+
+const gatewayExtensions = `healthcheckv2:
+pprof:
+  endpoint: 0.0.0.0:1777
+basicauth/opensearch:
+  client_auth:
+    username: admin
+    password: ./fetchOpen==404
+`
+
+const gatewayExporters = `debug:
+opensearch:
+  http:
+      tls:
+        insecure_skip_verify : true
+      endpoint: https://opensearch-cluster-master.default.svc.cluster.local:9200
+      auth:
+        authenticator: basicauth/opensearch
+`
 
 const gatewayConfig = `receivers:
   otlp:
@@ -323,102 +430,4 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [debug]
-`
-
-const nodeConfigBase = `
-receivers:
-  filelog/k8s:
-    include: [ /var/log/pods/*/*/*.log ]
-    exclude: []
-    storage: file_storage
-    include_file_path: true
-    include_file_name: false
-    operators:
-    # Find out which format is used by kubernetes
-    - type: router
-      id: get-format
-      routes:
-      - output: parser-docker
-        expr: 'body matches "^\\{"'
-      - output: parser-crio
-        expr: 'body matches "^[^ Z]+ "'
-      - output: parser-containerd
-        expr: 'body matches "^[^ Z]+Z"'
-        # Parse CRI-O format
-    - type: regex_parser
-      id: parser-crio
-      regex: '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-      output: extract_metadata_from_filepath
-      timestamp:
-        parse_from: attributes.time
-        layout_type: gotime
-        layout: '2006-01-02T15:04:05.000000000-07:00'
-      # Parse CRI-Containerd format
-    - type: regex_parser
-      id: parser-containerd
-      regex: '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-      output: extract_metadata_from_filepath
-      timestamp:
-        parse_from: attributes.time
-        layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-      # Parse Docker format
-    - type: json_parser
-      id: parser-docker
-      output: extract_metadata_from_filepath
-      timestamp:
-        parse_from: attributes.time
-        layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-      # Extract metadata from file path
-    - type: regex_parser
-      id: extract_metadata_from_filepath
-      regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_((?P<confighash>[a-f0-9]{32})|(?P<uid>[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{4}\b-[0-9a-f]{12}))\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$'
-      parse_from: attributes["log.file.path"]
-    - type: remove
-      field: attributes["log.file.path"]
-    # Move out attributes to Attributes
-    - type: move
-      id: move-namespace
-      from: attributes.namespace
-      to: resource["k8s.namespace.name"]
-    - type: move
-      id: move-pod-name
-      from: attributes.pod_name
-      to: resource["k8s.pod.name"]
-    - type: move
-      id: move-container-name
-      from: attributes.container_name
-      to: resource["k8s.container.name"]
-    - type: move
-      from: attributes.uid
-      to: resource["k8s.pod.uid"]
-    - type: move
-      from: attributes.confighash
-      to: resource["k8s.pod.confighash"]
-extensions:
-  pprof:
-    endpoint: 0.0.0.0:1777
-  healthcheckv2:
-  file_storage:
-    directory: /var/otel/filestorage
-    timeout: 1s
-`
-const nodeExp = `exporters:
-  otlp/gateway: 
-    endpoint : %s:4317
-    tls:
-      insecure: true
-      insecure_skip_verify : true
-    compression : none
-processors:
-  batch:
-service:
-  telemetry:
-    logs:
-      level : debug
-  extensions: [healthcheckv2, pprof, file_storage]
-  pipelines:
-    logs:
-      receivers: [filelog/k8s]
-      processors: [batch]
-      exporters: [otlp/gateway]
 `

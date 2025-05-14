@@ -57,20 +57,23 @@ func (h *handler) OnStackChange(key string, stack *v1alpha1.OpenTelemetryStack) 
 		applier = applier.WithOwner(stack)
 	}
 
-	g := StackGenerator{
-		stack: stack,
-	}
+	g := NewStackGenerator(
+		stack,
+	)
 
 	objs, err := g.Objects()
 	if err != nil {
+		logrus.Errorf("failed to construct objects : %s", err)
 		return stack, err
 	}
+	logrus.Infof("constructed %d objects for stack : %s/%s", len(objs), stack.Namespace, stack.Name)
 
 	objs = lo.Filter(objs, func(obj runtime.Object, _ int) bool {
 		return obj != nil
 	})
 
 	if err := applier.ApplyObjects(objs...); err != nil {
+		logrus.Errorf("failed to apply objects : %s", err)
 		return stack, err
 	}
 	return stack, nil

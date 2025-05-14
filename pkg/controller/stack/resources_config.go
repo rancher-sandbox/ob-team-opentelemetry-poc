@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/collector/config/confignet"
 	"go.opentelemetry.io/collector/config/configretry"
 	"go.opentelemetry.io/collector/config/configtelemetry"
+	"go.opentelemetry.io/collector/config/configtls"
 	"go.opentelemetry.io/collector/exporter/debugexporter"
 	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/exporter/otlpexporter"
@@ -292,6 +293,10 @@ func (g *ClusterStackGenerator) constructExporters() error {
 		config := otlpexporter.Config{
 			ClientConfig: configgrpc.ClientConfig{
 				Endpoint: fmt.Sprintf("%s:%d", dns, 4317),
+				TLSSetting: configtls.ClientConfig{
+					Insecure:           true,
+					InsecureSkipVerify: true,
+				},
 			},
 			TimeoutConfig: exporterhelper.NewDefaultTimeoutConfig(),
 			QueueConfig:   exporterhelper.NewDefaultQueueConfig(),

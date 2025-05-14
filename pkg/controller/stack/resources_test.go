@@ -142,3 +142,13 @@ func TestClusterStackGeneratorOpenTelemetryConfig(t *testing.T) {
 		os.WriteFile("config.yaml", rawBytes, 0777)
 	}
 }
+
+func TestStackGeneratorOpenTelemetryConfig(t *testing.T) {
+	stack := &v1alpha1.OpenTelemetryStack{}
+
+	g := NewStackGenerator(stack)
+
+	err := g.constructOpenTelemetryConfig()
+	require.NoError(t, err)
+
+}

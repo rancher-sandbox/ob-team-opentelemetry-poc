@@ -1,12 +1,22 @@
 # ob-team-opentelemetry-poc
 A proof-of-concept by the Observability and Backup team for using OpenTelemetry. The proof-of-concept is primarily aimed at replacing current logging infrastructure.
 
+## Creating a k3d cluster with audit logs
+
+```sh
+k3d cluster create logging \
+  --k3s-arg '--kube-apiserver-arg=audit-policy-file=/var/lib/rancher/k3s/server/manifests/audit.yaml@server:*' \
+  --k3s-arg '--kube-apiserver-arg=audit-log-path=/var/log/kubernetes/audit/audit.log@server:*' \
+  --volume "$(pwd)/examples/audit/audit-policy.yaml:/var/lib/rancher/k3s/server/manifests/audit.yaml" 
+```
+
 ## POC Setup
 
 
 Setup OpenSearch
 ```sh
 helm repo add opensearch https://opensearch-project.github.io/helm-charts/
+helm repo update
 helm install opensearch opensearch/opensearch -f ./examples/logging/opensearch.yaml
 helm install opensearch-dashboards opensearch/opensearch-dashboards
 ```
@@ -14,6 +24,11 @@ helm install opensearch-dashboards opensearch/opensearch-dashboards
 Setup microservices
 ```sh
 kubectl apply -f ./examples/microservices/manifests/
+```
+
+For the daemonset this namespace must exist:
+```sh
+kubectl create ns cattle-observability-system
 ```
 
 Run operator:

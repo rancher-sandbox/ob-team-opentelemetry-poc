@@ -387,7 +387,7 @@ pprof:
 basicauth/opensearch:
   client_auth:
     username: admin
-    password: ./fetchOpen==404
+    password: oBTeamPass123
 `
 
 const gatewayExporters = `debug:

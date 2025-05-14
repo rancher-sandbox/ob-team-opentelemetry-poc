@@ -114,7 +114,7 @@ func (g *ClusterStackGenerator) nodeSet(configMapRef string) (*appsv1.DaemonSet,
 							Name: "journal",
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/var/log/journal",
+									Path: g.clusterstack.Spec.K3sLogPath,
 								},
 							},
 						},
@@ -160,7 +160,7 @@ func (g *ClusterStackGenerator) nodeSet(configMapRef string) (*appsv1.DaemonSet,
 								},
 								{
 									Name:      "journal",
-									MountPath: "/var/log/journal",
+									MountPath: g.clusterstack.Spec.K3sLogPath,
 									ReadOnly:  true,
 								},
 								{
